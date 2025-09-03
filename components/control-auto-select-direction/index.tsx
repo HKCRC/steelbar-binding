@@ -1,12 +1,14 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Button, TouchableRipple } from 'react-native-paper';
 
 import { Command } from '@/constants/command';
+import { userDefaultEvent } from '@/constants/event';
 import useStore from '@/store';
 import { DIRECTION } from '@/types';
+import eventBus from '@/utils/eventBus';
 import { sendCmdDispatch } from '@/utils/helper';
 
 interface ControlAutoSelectDirectionProps {
@@ -18,38 +20,70 @@ export const ControlAutoSelectDirection = ({
   onStart,
   onStop,
 }: ControlAutoSelectDirectionProps) => {
-  const { robotStatus } = useStore((state) => state);
-  const [isLeftOrRight, setIsLeftOrRight] = useState<DIRECTION | undefined>(undefined);
-  const [isForwardOrBackward, setIsForwardOrBackward] = useState<DIRECTION | undefined>(undefined);
+  const { robotStatus, setRobotStatus } = useStore((state) => state);
+  const { isLeftOrRight, isForwardOrBackward } = robotStatus;
+
   const { t } = useTranslation();
+  const downRef = useRef<any>(null);
+
+  useEffect(() => {
+    eventBus.subscribe(
+      userDefaultEvent.DIRECITON_CHANGE,
+      (cmd: { leftOrRight: DIRECTION; forwardOrBackward: DIRECTION }) => {
+        const { leftOrRight, forwardOrBackward } = cmd;
+        setTimeout(() => {
+          setRobotStatus({
+            isLeftOrRight: leftOrRight,
+            isForwardOrBackward: forwardOrBackward,
+          });
+        }, 500);
+      }
+    );
+
+    return () => {
+      eventBus.unsubscribe(userDefaultEvent.DIRECITON_CHANGE, () => {});
+    };
+  }, []);
 
   const switchLeftOrRight = (direction: DIRECTION) => {
     if (isLeftOrRight === direction) {
-      setIsLeftOrRight(undefined);
+      setRobotStatus({
+        isLeftOrRight: undefined,
+      });
       return;
     }
 
     if (direction === DIRECTION.LEFT) {
       sendCmdDispatch(Command.LeftChange);
-      setIsLeftOrRight(DIRECTION.LEFT);
+      setRobotStatus({
+        isLeftOrRight: DIRECTION.LEFT,
+      });
     } else if (direction === DIRECTION.RIGHT) {
       sendCmdDispatch(Command.RightChange);
-      setIsLeftOrRight(DIRECTION.RIGHT);
+      setRobotStatus({
+        isLeftOrRight: DIRECTION.RIGHT,
+      });
     }
   };
 
   const switchTopOrDown = (direction: DIRECTION) => {
     if (isForwardOrBackward === direction) {
-      setIsForwardOrBackward(undefined);
+      setRobotStatus({
+        isForwardOrBackward: undefined,
+      });
       return;
     }
 
     if (direction === DIRECTION.UP) {
       sendCmdDispatch(Command.goForwardInAutoMode);
-      setIsForwardOrBackward(DIRECTION.UP);
+      setRobotStatus({
+        isForwardOrBackward: DIRECTION.UP,
+      });
     } else if (direction === DIRECTION.DOWN) {
       sendCmdDispatch(Command.goBackInAutoMode);
-      setIsForwardOrBackward(DIRECTION.DOWN);
+      setRobotStatus({
+        isForwardOrBackward: DIRECTION.DOWN,
+      });
     }
   };
 
@@ -64,7 +98,7 @@ export const ControlAutoSelectDirection = ({
           onPress={() => {
             onStart();
           }}>
-          开始
+          {t('common.start')}
         </Button>
 
         <Button
@@ -75,7 +109,7 @@ export const ControlAutoSelectDirection = ({
           onPress={() => {
             onStop();
           }}>
-          停止
+          {t('common.stop')}
         </Button>
       </View>
 
@@ -95,6 +129,7 @@ export const ControlAutoSelectDirection = ({
         </TouchableRipple>
         <TouchableRipple
           onPress={() => switchTopOrDown(DIRECTION.DOWN)}
+          ref={downRef}
           centered
           style={{ top: 30, opacity: isForwardOrBackward === DIRECTION.DOWN ? 1 : 0.5 }}
           className="rounded-full px-2 py-2"

@@ -3,20 +3,28 @@ import { View } from 'react-native';
 import { SegmentedButtons } from 'react-native-paper';
 
 import { Command } from '@/constants/command';
+import { userDefaultEvent } from '@/constants/event';
 import useStore from '@/store';
-import { ROBOT_CURRENT_MODE, ROBOT_WORK_MODE } from '@/types';
-import { sendCmdDispatch } from '@/utils/helper';
+import { DIRECTION, ROBOT_CURRENT_MODE, ROBOT_WORK_MODE } from '@/types';
+import eventBus from '@/utils/eventBus';
+import { sendCmdDispatch, sendCmdWithRepeat } from '@/utils/helper';
 
 export const ControlSegmented = () => {
   const { robotStatus, setRobotStatus, setDebugLog } = useStore((state) => state);
   const { t } = useTranslation();
   const sendCmd = (mode: ROBOT_CURRENT_MODE) => {
     if (mode === ROBOT_CURRENT_MODE.LOCKED) {
-      sendCmdDispatch(Command.lockUp);
+      sendCmdWithRepeat(() => {
+        sendCmdDispatch(Command.lockUp);
+      });
     } else if (mode === ROBOT_CURRENT_MODE.MANUAL) {
-      sendCmdDispatch(Command.manualModel);
+      sendCmdWithRepeat(() => {
+        sendCmdDispatch(Command.manualModel);
+      });
     } else if (mode === ROBOT_CURRENT_MODE.AUTO) {
-      sendCmdDispatch(Command.autoModel);
+      sendCmdWithRepeat(() => {
+        sendAutoCmdInit();
+      });
     }
   };
 
@@ -27,6 +35,16 @@ export const ControlSegmented = () => {
       Command.goForwardInAutoMode,
       Command.EndAutoMode,
     ];
+
+    setRobotStatus({
+      currentBindingMode: ROBOT_WORK_MODE.WITHOUT_BINDING,
+    });
+
+    // 只在首次进入自动模式时设置默认方向，不要强制重置用户已选择的方向
+    eventBus.publish(userDefaultEvent.DIRECITON_CHANGE, {
+      leftOrRight: DIRECTION.LEFT,
+      forwardOrBackward: DIRECTION.UP,
+    });
 
     commands.forEach((command, index) => {
       setTimeout(() => {
@@ -49,9 +67,6 @@ export const ControlSegmented = () => {
           setRobotStatus({
             currentMode: value as ROBOT_CURRENT_MODE,
           });
-          if (value === ROBOT_CURRENT_MODE.AUTO) {
-            sendAutoCmdInit();
-          }
           if (value !== ROBOT_CURRENT_MODE.AUTO) {
             setRobotStatus({
               currentBindingMode: '',
@@ -100,11 +115,17 @@ export const ControlSegmented = () => {
               currentBindingMode: value as ROBOT_WORK_MODE,
             });
             if (value === ROBOT_WORK_MODE.WITHOUT_BINDING) {
-              sendCmdDispatch(Command.noLashed);
+              sendCmdWithRepeat(() => {
+                sendCmdDispatch(Command.noLashed);
+              });
             } else if (value === ROBOT_WORK_MODE.FULL_BINDING) {
-              sendCmdDispatch(Command.allLashed);
+              sendCmdWithRepeat(() => {
+                sendCmdDispatch(Command.allLashed);
+              });
             } else if (value === ROBOT_WORK_MODE.SKIP_BINDING) {
-              sendCmdDispatch(Command.jumpLashed);
+              sendCmdWithRepeat(() => {
+                sendCmdDispatch(Command.jumpLashed);
+              });
             }
           }}
           buttons={[

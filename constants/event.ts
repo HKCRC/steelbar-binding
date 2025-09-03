@@ -20,3 +20,8 @@ export enum eventBusKey {
   BackBoardEvent = 'BackBoardEvent',
   FrontBoardEvent = 'FrontBoardEvent',
 }
+
+
+export enum userDefaultEvent {
+  DIRECITON_CHANGE = 'DIRECITON_CHANGE',
+}

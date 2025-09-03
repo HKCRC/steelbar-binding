@@ -255,3 +255,23 @@ export const parserFrontBoardData = (data: string) => {
     `;
   return logStr;
 };
+
+export const sendCmdWithRepeat = (
+  sendCmdVoid: () => void,
+  repeatCount: number = 2,
+  intervalMs: number = 300
+): void => {
+  let i = repeatCount;
+  const sendNext = () => {
+    if (i-- > 0) {
+      console.log('sendCmdWithRepeat', i);
+      sendCmdVoid();
+
+      if (i > 0) {
+        setTimeout(sendNext, intervalMs);
+      }
+    }
+  };
+
+  sendNext();
+};

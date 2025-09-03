@@ -26,6 +26,8 @@ interface State {
     electric: number;
     wifiConnectStatus: boolean;
     currentConnectWifiSSID: string;
+    isLeftOrRight: DIRECTION | undefined;
+    isForwardOrBackward: DIRECTION | undefined;
   };
   setRobotStatus: (newInfo: Partial<State['robotStatus']>) => void;
   userInfo: {
@@ -99,6 +101,8 @@ export const useStore = create<State>((set) => ({
       [DIRECTION.LEFT, false],
       [DIRECTION.RIGHT, false],
     ]),
+    isLeftOrRight: undefined,
+    isForwardOrBackward: undefined,
     currentMode: ROBOT_CURRENT_MODE.LOCKED, // 当前模式
     currentBindingMode: '', // 当前绑扎模式
     isWorking: false, // 机器人是否在工作
