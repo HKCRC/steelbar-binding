@@ -258,8 +258,8 @@ export const parserFrontBoardData = (data: string) => {
 
 export const sendCmdWithRepeat = (
   sendCmdVoid: () => void,
-  repeatCount: number = 2,
-  intervalMs: number = 300
+  repeatCount: number = 3,
+  intervalMs: number = 100
 ): void => {
   let i = repeatCount;
   const sendNext = () => {
