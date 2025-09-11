@@ -264,7 +264,6 @@ export const sendCmdWithRepeat = (
   let i = repeatCount;
   const sendNext = () => {
     if (i-- > 0) {
-      console.log('sendCmdWithRepeat', i);
       sendCmdVoid();
 
       if (i > 0) {
